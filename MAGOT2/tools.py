@@ -3,16 +3,17 @@ import numpy as np
 from . import lib
 
 
-def sumstats(table:str,column: int = 0, cname: str = None, N: bool = False, 
+def sumstats(table:str, *,column: int = 0, cname: str = None, N: bool = False, 
             deciles: bool = False, delim: str = "\t"):
     """
-    Calulate summary stats for a column in an input file.
-    
+    Calulate summary stats for a column in an input file
+
     :param table:  input table with column to summarize
     :param column: int default 0. Column to summarize (zero-based index)
     :param cname: str default None. If specified, selects column number based on field name in header
     :param N: bool default False. If set, returns N0-N100 (in increments of ten) for input data
     :param deciles: bool default False. If set, returns deciles for input data
+    :param delim: str default "\\t". Table column delimiter character
     """
     with open(table) as f:
         nlist = []
