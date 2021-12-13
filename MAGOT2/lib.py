@@ -44,7 +44,7 @@ def translate(x,padNs = False,frames = 1):
         return ttabs
 
 def revcomp(x):
-    comp = {'A':'T','T':'A','C':'G','G':'C'
+    comp = {'A':'T','T':'A','C':'G','G':'C',
             'a':'t','t':'a','c':'g','g':'c'}
     rctab = []
     for char in x[::-1]:
