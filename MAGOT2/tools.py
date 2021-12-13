@@ -7,6 +7,7 @@ def sumstats(table:str,column: int = 0, cname: str = None, N: bool = False,
             deciles: bool = False, delim: str = "\t"):
     """
     Calulate summary stats for a column in an input file.
+    
     :param table:  input table with column to summarize
     :param column: int default 0. Column to summarize (zero-based index)
     :param cname: str default None. If specified, selects column number based on field name in header
