@@ -15,6 +15,8 @@ def sumstats(table:str, *,column: int = 0, cname: str = None, N: bool = False,
     :param deciles: bool default False. If set, returns deciles for input data
     :param delim: str default "\\t". Table column delimiter character
     """
+    if table == '-':
+        table = '/dev/stdin'
     with open(table) as f:
         nlist = []
         for i,line in enumerate(f):
