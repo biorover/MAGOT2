@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import numpy as np
 from . import lib
+import sys
 
 
 def sumstats(table:str, *,column: int = 0, cname: str = None, N: bool = False, 
