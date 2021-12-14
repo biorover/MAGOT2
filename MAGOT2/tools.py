@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import numpy as np
+import pandas as pd
 from . import lib
 import sys
 from pathlib import Path
@@ -75,3 +76,18 @@ or "lorfaa" (longest orf amino acid) sequence
     out = open(out_file,'w')
     for k,v in seqs.items():
         out.write('>' + k + '\n' + v + '\n')
+
+def tiginfo_from_fai(fai: Path):
+    """
+    Annotates tigs with cummulative sequence content and returns info sorted by length
+
+    :params fai: Path. Path to fai file (or any tab-delimeted table with contig name in first column and length in second)
+    """
+    df = pd.read_csv(fai,header = None, sep = "\t")
+    df.columns[0] = 'tig'
+    df.columns[1] = 'tiglen'
+    df = df.sort_values('tiglen',ascending = False)
+    lensum,runsum = df['tiglen'].sum(),0
+    for i,row in df.iterrows():
+        runsum += row['tiglen']
+        sys.stdout.write("\t".join([str(k) for k in [row['tig'],row['tiglen'], i, 100 * runsum / lensum, runsum] ]) + '\n')
