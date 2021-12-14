@@ -212,7 +212,7 @@ transcript_dictionary -> gene_dictionary)
                 if feature in annotdict[gene_id][transcript_id]:
                     for ivl in annotdict[gene_id][transcript_id][feature]:
                         attrs = ivl[2]
-                        linelist.append('\t'.join([attrs['seqid'],attrs['source'],str(ivl[0] + 1), str(ivl[1]), 
+                        linelist.append('\t'.join([attrs['seqid'],attrs['source'],feature,str(ivl[0] + 1), str(ivl[1]), 
                                                 attrs['score'],attrs['strand'],attrs['phase'],
                                                 'gene_id ' + gene_id + ';transcript_id ' + transcript_id]))
     return "\n".join(linelist)
