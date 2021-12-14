@@ -121,7 +121,7 @@ def read_gff(gfffile: Path,version: Union[str,int] = 'auto') -> OrderedDict:
     return annotdict
 
 def annot2seqs(annotdict: dict, fasta_file: Path, which_transcript: str = 'all', 
-            seq_from: str = 'CDS', name_from: str = 'transcript', seq_type: str = "nucl") -> OrderedDict:
+            seq_from: str = 'CDS', seq_level: str = 'transcript', seq_type: str = "nucl") -> OrderedDict:
     """
     takes an annotdict (nested objects coordinate_IntervalTree -> feature_dictionary -> \
 transcript_dictionary -> gene_dictionary) ant returns a dictionary of all sequences
@@ -130,16 +130,19 @@ transcript_dictionary -> gene_dictionary) ant returns a dictionary of all sequen
     :param fasta_file: Path. Path to fasta file
     :param which_transcript: str default "all". Options are "all", "longest", "first", and "best_scoring"    
     :param seq_from: str default "CDS". Name of feature to extract sequence from (usually "CDS" or "exon")
-    :param name_from: str default "transcript". Feature to derive sequence name, can be "transcript" or \
-"gene" (if option "transcripts" is set to "longest" or "first")
+    :param seq_level: str default "transcript". What to return the sequences of - usually "transcript" or "gene" \
+(gene only valid if which_transcript = "first", "longest", or "best_scoring"). \
+Could also be "CDS" or "exon" or other sub-feature (must then match "seq_from" argument)
     :param seq_type: str default "nucl". Whether to output "nucl" (nucleotide), "aa" (translated amino acid) \
 or "lorfaa" (longest orf amino acid) sequence
     """
     if not os.path.exists(str(fasta_file) + '.fai'):
         pysam.faidx(fasta_file)
-    if not name_from in ['transcript','gene']:
-        sys.stderr.write('error: invalid choice for "name_from": ' + str(name_from) + '! Currently supported: "transcript" or "gene"\n')
-        return None
+    if not seq_level in ['transcript','gene']:
+        if seq_level != seq_from:
+            sys.stderr.write('error: invalid choice for "seq_level": ' + str(name_from) + 
+                            '! Currently supported: "transcript", "gene", or else must match "seq_from" argument\n')
+            return None
     fasta = pysam.FastaFile(fasta_file)
     outseqs = OrderedDict()
     for gene_id in annotdict:
@@ -159,25 +162,30 @@ or "lorfaa" (longest orf amino acid) sequence
                     elif strand != interval[2]['strand']:
                         sys.stderr.write('error: annotations contain transcript with features on different strands! Not currently supported, and doesn\'t really make sense!\n')
                         return None
-                    seq.append(fasta.fetch(seqid,interval[0],interval[1]))
+                    iseq = fasta.fetch(seqid,interval[0],interval[1])
+                    if not seq_level in ['transcript','gene']:
+                        outseqs[transcript_id + ":" + seq_from + str(i)] = iseq
+                    else:
+                        seq.append(iseq)
+                        if which_transcript == 'best_scoring':
+                            scores.append(interval[2]['score'])
+                if seq_level in ['transcript','gene']:
+                    seq = "".join(seq)
+                    if strand == '-':
+                        seq = revcomp(seq)
+                    if which_transcript == 'all':
+                        outseqs[transcript_id] = seq
+                    else:
+                        tseqs.append(seq[:])
                     if which_transcript == 'best_scoring':
-                        scores.append(interval[2]['score'])
-                seq = "".join(seq)
-                if strand == '-':
-                    seq = revcomp(seq)
-                if which_transcript == 'all':
-                    outseqs[transcript_id] = seq
-                else:
-                    tseqs.append(seq[:])
-                if which_transcript == 'best_scoring':
-                    tscores.append(np.mean(scores))
-        if which_transcript == 'first':
-            outseqs[locals()[name_from + '_id'] ] = tseqs[0]
-        elif which_transcript == 'longest':
+                        tscores.append(np.mean(scores))
+        if which_transcript == 'first' and seq_level in ['transcript','gene']:
+            outseqs[locals()[seq_level + '_id'] ] = tseqs[0]
+        elif which_transcript == 'longest' and seq_level in ['transcript','gene']:
             seqlens = [len(k) for k in tseqs]
-            outseqs[locals()[name_from + '_id'] ] = tseqs[np.argmax(seqlens)]
-        elif which_transcript == 'best_scoring':
-            outseqs[locals()[name_from + '_id'] ] = tseqs[np.argmax(tscores)]
+            outseqs[locals()[seq_level + '_id'] ] = tseqs[np.argmax(seqlens)]
+        elif which_transcript == 'best_scoring' and seq_level in ['transcript','gene']:
+            outseqs[locals()[seq_level + '_id'] ] = tseqs[np.argmax(tscores)]
     if seq_type == 'aa':
         outseqs = OrderedDict((k,translate(v)) for k,v in outseqs.items())
     elif seq_type == 'lorfaa':

@@ -55,23 +55,24 @@ def sumstats(table:str, *,column: int = 0, cname: str = None, N: bool = False,
             if deciles:
                 sys.stdout.write(''.join(toprint))
 
-def gff2fasta(gff: Path, fasta: Path, *, name_from: str = 'transcript', which_transcript: str = 'all', 
+def gff2fasta(gff: Path, fasta: Path, *, which_transcript: str = 'all', seq_level: str = 'transcript', 
             seq_from: str = 'CDS', seq_type: str = 'nucl', out_file: Path = '/dev/stdout'):
     """
     Fetches sequences of transcripts from gff (should work with sane gff3 and gtf files) from a fasta
 
     :param gff: Path. Path to gff file
     :param fasta: Path. Path to fasta file
-    :param name_from: str default "transcript". Whether to name sequences after "transcript" or "gene" identifier \
-(gene identifier only valid if which_transcript = "first", "longest", or "best_scoring")
     :param which_transcript: str default "all". Which transcript to select for each gene. Options are \
 "all", "first", "longest", or "best_scoring"
+    :param seq_level: str default "transcript". What to return the sequences of - usually "transcript" or "gene" \
+(gene only valid if which_transcript = "first", "longest", or "best_scoring"). \
+Could also be "CDS" or "exon" or other sub-feature (must then match "seq_from" argument)
     :param seq_from: str default "CDS". Feature type from which to extract sequence (usually "CDS" or "exon")
     :param seq_type: str default "nucl". Whether to output "nucl" (nucleotide), "aa" (translated peptide/amino acid) \
 or "lorfaa" (longest orf amino acid) sequence
     """
     annots = lib.read_gff(gff)
-    seqs = lib.annot2seqs(annots,fasta,which_transcript = which_transcript, name_from = name_from,
+    seqs = lib.annot2seqs(annots,fasta,which_transcript = which_transcript, seq_level = seq_level,
                         seq_from = seq_from, seq_type = seq_type)
     out = open(out_file,'w')
     for k,v in seqs.items():
