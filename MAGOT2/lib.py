@@ -27,6 +27,7 @@ def translate(x: str,padNs: bool = False,frames: Union[list,int] = 1) -> Union[l
             'AGT':'S','AGC':'S','AGA':'R','AGG':'R','GGT':'G','GGC':'G','GGA':'G','GGG':'G'}
     if 'u' in x or 'U' in x:
         x = x.replace('U','T').replace('u','t')
+    rstring = False
     if type(frames) == int:
         frames = [frames]
         rstring = True
