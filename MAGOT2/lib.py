@@ -180,7 +180,7 @@ or "lorfaa" (longest orf amino acid) sequence
         elif which_transcript == 'best_scoring':
             outseqs[locals()[name_from + '_id'] ] = tseqs[np.argmax(tscores)]
     if seq_type == 'aa':
-        outseqs = OrderedDict((k,translate(v)) for k,v in outseqs.iteritems())
+        outseqs = OrderedDict((k,translate(v)) for k,v in outseqs.items())
     elif seq_type == 'lorfaa':
-        outseqs = OrderedDict((k,orfs(v,best = True)) for k,v in outseqs.iteritems())
+        outseqs = OrderedDict((k,orfs(v,best = True)) for k,v in outseqs.items())
     return outseqs

@@ -73,5 +73,5 @@ or "lorfaa" (longest orf amino acid) sequence
     seqs = lib.annot2seqs(annots,fasta,which_transcript = which_transcript, name_from = name_from,
                         seq_from = seq_from, seq_type = seq_type)
     out = open(out_file,'w')
-    for k,v in seqs.iteritems():
+    for k,v in seqs.items():
         out.write('>' + k + '\n' + v + '\n')
