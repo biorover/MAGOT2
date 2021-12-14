@@ -147,30 +147,31 @@ or "lorfaa" (longest orf amino acid) sequence
         tseqs = []
         tscores = []
         for transcript_id in annotdict[gene_id]:
-            seq = []
-            scores = []
-            for i,interval in enumerate(sorted(annotdict[gene_id][transcript_id][seq_from])):
-                if i == 0:
-                    seqid = interval[2]['seqid']
-                    strand = interval[2]['strand']
-                elif seqid != interval[2]['seqid']:
-                    sys.stderr.write('error: annotations contain transcript with features on different sequence! Not currently supported\n')
-                    return None
-                elif strand != interval[2]['strand']:
-                    sys.stderr.write('error: annotations contain transcript with features on different strands! Not currently supported, and doesn\'t really make sense!\n')
-                    return None
-                seq.append(fasta.fetch(seqid,interval[0],interval[1]))
+            if seq_from in annotdict[gene_id][transcript_id]:
+                seq = []
+                scores = []
+                for i,interval in enumerate(sorted(annotdict[gene_id][transcript_id][seq_from])):
+                    if i == 0:
+                        seqid = interval[2]['seqid']
+                        strand = interval[2]['strand']
+                    elif seqid != interval[2]['seqid']:
+                        sys.stderr.write('error: annotations contain transcript with features on different sequence! Not currently supported\n')
+                        return None
+                    elif strand != interval[2]['strand']:
+                        sys.stderr.write('error: annotations contain transcript with features on different strands! Not currently supported, and doesn\'t really make sense!\n')
+                        return None
+                    seq.append(fasta.fetch(seqid,interval[0],interval[1]))
+                    if which_transcript == 'best_scoring':
+                        scores.append(interval[2]['score'])
+                seq = "".join(seq)
+                if strand == '-':
+                    seq = revcomp(seq)
+                if which_transcript == 'all':
+                    outseqs[transcript_id] = seq
+                else:
+                    tseqs.append(seq[:])
                 if which_transcript == 'best_scoring':
-                    scores.append(interval[2]['score'])
-            seq = "".join(seq)
-            if strand == '-':
-                seq = revcomp(seq)
-            if which_transcript == 'all':
-                outseqs[transcript_id] = seq
-            else:
-                tseqs.append(seq[:])
-            if which_transcript == 'best_scoring':
-                tscores.append(np.mean(scores))
+                    tscores.append(np.mean(scores))
         if which_transcript == 'first':
             outseqs[locals()[name_from + '_id'] ] = tseqs[0]
         elif which_transcript == 'longest':
