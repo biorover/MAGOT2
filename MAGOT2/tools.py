@@ -89,4 +89,4 @@ def fai2tiginfo(fai: Path):
     lensum,runsum = df['tiglen'].sum(),0
     for i,row in df.iterrows():
         runsum += row['tiglen']
-        sys.stdout.write("\t".join([str(k) for k in [row['tig'],row['tiglen'], i, 100 * runsum / lensum, runsum] ]) + '\n')
+        sys.stdout.write("\t".join([str(k) for k in [row['tig'],row['tiglen'], i + 1, int(100 * runsum / lensum), runsum] ]) + '\n')
