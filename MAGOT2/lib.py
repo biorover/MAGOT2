@@ -75,7 +75,6 @@ def read_gff(gfffile: Path,version: Union[str,int] = 'auto') -> OrderedDict:
     with open(gfffile) as gff:
         for i,line in enumerate(gff):
             fields = line.split('\t')
-            feature = fields[2]
             if version == 'auto' and i==0:
                 if "#gff-version" in line:
                     version = int(line.split()[1])
@@ -87,6 +86,7 @@ def read_gff(gfffile: Path,version: Union[str,int] = 'auto') -> OrderedDict:
                     sys.stderr.write('Cannot determine gff format version of file from first line\n')
                     return None
             if line[0] != "#":
+                feature = fields[2]
                 if version == 3:
                     attrs = {k:v for (k,v) in [i.split('=') for i in fields[8].split(';')] }
                 elif version == 2:
