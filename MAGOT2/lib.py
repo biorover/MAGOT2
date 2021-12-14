@@ -91,7 +91,7 @@ def read_gff(gfffile: Path,version: Union[str,int] = 'auto') -> OrderedDict:
             if version == 3:
                 attrs = {k:v for (k,v) in [i.split('=') for i in fields[8].split(';')] }
             elif version == 2:
-                attrs = {k:v.replace('"','') for (k,v) in [(i.split(' ')[0],' '.join(i.split(' ')[1:])) for i in fields[8].split(';')] }
+                attrs = {k:v.replace('"','') for (k,v) in [(i.split(' ')[0],' '.join(i.split(' ')[1:])) for i in fields[8].replace('; ',';').split(';')] }
             if version == 3:
                 if feature == 'gene':
                     gene_id = attrs['ID']
