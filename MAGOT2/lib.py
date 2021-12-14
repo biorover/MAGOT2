@@ -55,11 +55,23 @@ def translate(x: str,padNs: bool = False,frames: Union[list,int] = 1) -> Union[l
         return ttabs
 
 def revcomp(x: str) -> str:
-    comp = {'A':'T','T':'A','C':'G','G':'C',
-            'a':'t','t':'a','c':'g','g':'c'}
+    comp = [
+        ('A','X'),
+        ('T','A'),
+        ('X','T'),
+        ('C','X'),
+        ('G','C'),
+        ('X','G'),
+        ('a','x'),
+        ('t','a'),
+        ('x','t'),
+        ('g','x'),
+        ('c','g'),
+        ('x','c')
+    ]
     seq = x[::-1]
-    for char in comp:
-        seq = seq.replace(char,comp[char])
+    for o,n in comp:
+        seq = seq.replace(o,n)
     return seq
 
 def orfs(x: str,best: bool = False) -> Union[list,str]: #todo: #1 add info table
