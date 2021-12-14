@@ -83,9 +83,8 @@ def fai2tiginfo(fai: Path):
 
     :params fai: Path. Path to fai file (or any tab-delimeted table with contig name in first column and length in second)
     """
-    df = pd.read_csv(fai,header = None, sep = "\t")
-    df.columns[0] = 'tig'
-    df.columns[1] = 'tiglen'
+    df = pd.read_csv(fai,header = None, sep = "\t").iloc[:,:2]
+    df.columns = ['tig','tiglen']
     df = df.sort_values('tiglen',ascending = False)
     lensum,runsum = df['tiglen'].sum(),0
     for i,row in df.iterrows():
