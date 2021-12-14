@@ -77,7 +77,7 @@ or "lorfaa" (longest orf amino acid) sequence
     for k,v in seqs.items():
         out.write('>' + k + '\n' + v + '\n')
 
-def tiginfo_from_fai(fai: Path):
+def fai2tiginfo(fai: Path):
     """
     Annotates tigs with cummulative sequence content and returns info sorted by length
 
