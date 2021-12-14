@@ -43,12 +43,14 @@ def sumstats(table:str, *,column: int = 0, cname: str = None, N: bool = False,
             Ps = [100,90,80,70,60,50,40,30,20,10,0]
             for i,value in enumerate(myarray):
                 running_total += value
-                if 100 * running_total / mysum >= Ns[-1] and N:
-                    sys.stdout.write("N" + str(Ns[-1]) + ": " + str(value) + "\n")
-                    Ns.pop()
-                if 100 * i / tot_len >= Ps[-1] and deciles:
-                    toprint.append(str(Ps[-2]) + 'th percentile: ' + str(value) + '\n')
-                    Ps.pop()
+                if len(Ns) > 0:
+                    if 100 * running_total / mysum >= Ns[-1] and N:
+                        sys.stdout.write("N" + str(Ns[-1]) + ": " + str(value) + "\n")
+                        Ns.pop()
+                if len(Ps) > 0:
+                    if 100 * i / tot_len >= Ps[-1] and deciles:
+                        toprint.append(str(Ps[-2]) + 'th percentile: ' + str(value) + '\n')
+                        Ps.pop()
             if deciles:
                 sys.stdout.write(''.join(toprint))
 
