@@ -56,7 +56,7 @@ def sumstats(table:str, *,column: int = 0, cname: str = None, N: bool = False,
                 sys.stdout.write(''.join(toprint))
 
 def gff2fasta(gff: Path, fasta: Path, *, which_transcript: str = 'all', seq_level: str = 'transcript', 
-            seq_from: str = 'CDS', seq_type: str = 'nucl', out_file: Path = '/dev/stdout'):
+            seq_from: str = 'CDS', seq_type: str = 'nucl', output: Path = '/dev/stdout'):
     """
     Fetches sequences of transcripts from gff (should work with sane gff3 and gtf files) from a fasta
 
@@ -74,9 +74,9 @@ or "lorfaa" (longest orf amino acid) sequence
     annots = lib.read_gff(gff)
     seqs = lib.annot2seqs(annots,fasta,which_transcript = which_transcript, seq_level = seq_level,
                         seq_from = seq_from, seq_type = seq_type)
-    out = open(out_file,'w')
-    for k,v in seqs.items():
-        out.write('>' + k + '\n' + v + '\n')
+    with open(output,'w') as f:
+        for k,v in seqs.items():
+            f.write('>' + k + '\n' + v + '\n')
 
 def fai2tiginfo(fai: Path):
     """
@@ -91,3 +91,15 @@ def fai2tiginfo(fai: Path):
     for i,row in df.iterrows():
         runsum += row['tiglen']
         sys.stdout.write("\t".join([str(k) for k in [row['tig'],row['tiglen'], i + 1, int(100 * runsum / lensum), runsum] ]) + '\n')
+
+def gff2gtf(gff: Path, *, output: Path = '/dev/stdout'):
+    """
+    Takes input gff (sane gff3s or gtfs) and writes out clean CDS gtf for O.G. MAGOT / HAPpy-ABCENTH compatibility
+
+    :params gff: Path. Path to input gff file
+    """
+    gfflines = lib.annot2gtf(lib.read_gff(gff))
+    with open(output,'w') as f:
+        f.write(gfflines + '\n')
+
+        

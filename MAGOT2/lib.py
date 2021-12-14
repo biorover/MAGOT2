@@ -114,6 +114,7 @@ def read_gff(gfffile: Path,version: Union[str,int] = 'auto') -> OrderedDict:
                 start = int(fields[3]) - 1
                 stop = int(fields[4])
                 attrs['seqid'] = fields[0]
+                attrs['source'] = fields[1]
                 attrs['score'] = fields[5]
                 attrs['strand'] = fields[6]
                 attrs['phase'] = fields[7]
@@ -191,3 +192,27 @@ or "lorfaa" (longest orf amino acid) sequence
     elif seq_type == 'lorfaa':
         outseqs = OrderedDict((k,orfs(v,best = True)) for k,v in outseqs.items())
     return outseqs
+
+def annot2gtf(annotdict: dict, features2write: Union[list,str] = 'CDS') -> str:
+    """
+    takes a MAGOT2 format annotation dictionary and returns a string for specific annotations in gtf format
+
+    :params annotdict: dict. MAGOT2 format annotation dictionary (nested objects coordinate_IntervalTree -> feature_dictionary -> \
+transcript_dictionary -> gene_dictionary)
+    :params features2write: list or str default "CDS". What features to write out (usually "CDS", sometimes also "exon")
+    """
+    if type(features2write) == str:
+        f2w = [features2write]
+    else:
+        f2w = features2write
+    linelist = []
+    for gene_id in annotdict:
+        for transcript_id in annotdict[gene_id]:
+            for feature in f2w:
+                if feature in annotdic[gene_id][transcript_id]:
+                    for ivl in annotdic[gene_id][transcript_id][feature]:
+                        attrs = ivl[2]
+                        linelist.append('\t'.join([attrs['seqid'],attrs['source'],str(ivl[0] + 1), str(ivl[1]), 
+                                                attrs['score'],attrs['strand'],attrs['phase'],
+                                                'gene_id ' + gene_id + ';transcript_id ' + transcript_id])
+    return "\n".join(linelist)
