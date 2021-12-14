@@ -95,7 +95,7 @@ def read_gff(gfffile: Path,version: Union[str,int] = 'auto') -> OrderedDict:
                     if feature == 'gene':
                         gene_id = attrs['ID']
                         transcript_id = 'none' # this is so I can access the coords of the whole gene under annotdict[gene_id]["none"]['gene']
-                    elif feature == 'mRNA':
+                    elif feature in ['mRNA','transcript']:
                         transcript_id = attrs['ID']
                         gene_id = attrs['Parent']
                         t2g[transcript_id] = gene_id
