@@ -209,8 +209,8 @@ transcript_dictionary -> gene_dictionary)
     for gene_id in annotdict:
         for transcript_id in annotdict[gene_id]:
             for feature in f2w:
-                if feature in annotdic[gene_id][transcript_id]:
-                    for ivl in annotdic[gene_id][transcript_id][feature]:
+                if feature in annotdict[gene_id][transcript_id]:
+                    for ivl in annotdict[gene_id][transcript_id][feature]:
                         attrs = ivl[2]
                         linelist.append('\t'.join([attrs['seqid'],attrs['source'],str(ivl[0] + 1), str(ivl[1]), 
                                                 attrs['score'],attrs['strand'],attrs['phase'],
