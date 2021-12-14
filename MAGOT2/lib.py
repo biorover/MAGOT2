@@ -136,7 +136,7 @@ transcript_dictionary -> gene_dictionary) ant returns a dictionary of all sequen
     :param seq_type: str default "nucl". Whether to output "nucl" (nucleotide), "aa" (translated amino acid) \
 or "lorfaa" (longest orf amino acid) sequence
     """
-    if not os.path.exists(fasta_file + '.fai'):
+    if not os.path.exists(str(fasta_file) + '.fai'):
         pysam.faidx(fasta_file)
     if not name_from in ['transcript','gene']:
         sys.stderr.write('error: invalid choice for "name_from": ' + str(name_from) + '! Currently supported: "transcript" or "gene"\n')
