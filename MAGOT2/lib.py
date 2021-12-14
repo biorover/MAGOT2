@@ -77,7 +77,7 @@ def read_gff(gfffile: Path,version: Union[str,int] = 'auto') -> OrderedDict:
             fields = line.split('\t')
             feature = fields[2]
             if version == 'auto' and i==0:
-                if "##gff-version" in line:
+                if "#gff-version" in line:
                     version = int(line.split()[1])
                 elif "ID=" in line:
                     version = 3
@@ -86,37 +86,38 @@ def read_gff(gfffile: Path,version: Union[str,int] = 'auto') -> OrderedDict:
                 else:
                     sys.stderr.write('Cannot determine gff format version of file from first line\n')
                     return None
-            if version == 3:
-                attrs = {k:v for (k,v) in [i.split('=') for i in fields[8].split(';')] }
-            elif version == 2:
-                attrs = {k:v.replace('"','') for (k,v) in [(i.split(' ')[0],' '.join(i.split(' ')[1:])) for i in fields[8].replace('; ',';').split(';')] }
-            if version == 3:
-                if feature == 'gene':
-                    gene_id = attrs['ID']
-                    transcript_id = 'none' # this is so I can access the coords of the whole gene under annotdict[gene_id]["none"]['gene']
-                elif feature == 'mRNA':
-                    transcript_id = attrs['ID']
-                    gene_id = attrs['Parent']
-                    t2g[transcript_id] = gene_id
-                else:
-                    transcript_id = attrs['Parent']
-                    gene_id = t2g[transcript_id]
-            elif version == 2:
-                gene_id = attrs['gene_id']
-                transcript_id = attrs['transcript_id']
-            if not gene_id in annotdict:
-                annotdict[gene_id] = OrderedDict()
-            if not transcript_id in annotdict[gene_id]:
-                annotdict[gene_id][transcript_id] = dict()
-            if not feature in annotdict[gene_id][transcript_id]:
-                annotdict[gene_id][transcript_id][feature] = IntervalTree()
-            start = int(fields[3]) - 1
-            stop = int(fields[4])
-            attrs['seqid'] = fields[0]
-            attrs['score'] = fields[5]
-            attrs['strand'] = fields[6]
-            attrs['phase'] = fields[7]
-            annotdict[gene_id][transcript_id][feature][start:stop] = attrs
+            if line[0] != "#":
+                if version == 3:
+                    attrs = {k:v for (k,v) in [i.split('=') for i in fields[8].split(';')] }
+                elif version == 2:
+                    attrs = {k:v.replace('"','') for (k,v) in [(i.split(' ')[0],' '.join(i.split(' ')[1:])) for i in fields[8].replace('; ',';').split(';')] }
+                if version == 3:
+                    if feature == 'gene':
+                        gene_id = attrs['ID']
+                        transcript_id = 'none' # this is so I can access the coords of the whole gene under annotdict[gene_id]["none"]['gene']
+                    elif feature == 'mRNA':
+                        transcript_id = attrs['ID']
+                        gene_id = attrs['Parent']
+                        t2g[transcript_id] = gene_id
+                    else:
+                        transcript_id = attrs['Parent']
+                        gene_id = t2g[transcript_id]
+                elif version == 2:
+                    gene_id = attrs['gene_id']
+                    transcript_id = attrs['transcript_id']
+                if not gene_id in annotdict:
+                    annotdict[gene_id] = OrderedDict()
+                if not transcript_id in annotdict[gene_id]:
+                    annotdict[gene_id][transcript_id] = dict()
+                if not feature in annotdict[gene_id][transcript_id]:
+                    annotdict[gene_id][transcript_id][feature] = IntervalTree()
+                start = int(fields[3]) - 1
+                stop = int(fields[4])
+                attrs['seqid'] = fields[0]
+                attrs['score'] = fields[5]
+                attrs['strand'] = fields[6]
+                attrs['phase'] = fields[7]
+                annotdict[gene_id][transcript_id][feature][start:stop] = attrs
     return annotdict
 
 def annot2seqs(annotdict: dict, fasta_file: Path, which_transcript: str = 'all', 
