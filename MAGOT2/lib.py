@@ -10,7 +10,7 @@ def mode(a,prec = 2) -> float:
     vals,counts =  np.unique(np.around(a,prec),return_counts=True)
     return vals[np.argmax(counts)]
 
-def translate(x: str,padNs: bool = False,frames: Union[list,int] = 1) -> Union[list,str]:
+def translate(x: str,padXs: bool = False,frames: Union[list,int] = 1) -> Union[list,str]:
     """
     Translates DNA/RNA sequence into amino acid characters
 
@@ -43,11 +43,11 @@ def translate(x: str,padNs: bool = False,frames: Union[list,int] = 1) -> Union[l
             start = -1 * frame - 1
         for i in range(start,len(seq),3):
             codon = x[i:i+3]
-            if len(codon) == 3 or padNs:
+            if len(codon) == 3 or padXs:
                 if codon.upper() in codons:
                     ttab.append(codons[codon])
                 else:
-                    ttab.append('N')
+                    ttab.append('X')
         ttabs.append("".join(ttab))
     if rstring:
         return ttabs[0]
