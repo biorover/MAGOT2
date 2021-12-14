@@ -109,7 +109,7 @@ def read_gff(gfffile: Path,version: Union[str,int] = 'auto') -> OrderedDict:
             if not gene_id in annotdict:
                 annotdict[gene_id] = OrderedDict()
             if not transcript_id in annotdict[gene_id]:
-                annotdict[gene_id][transcript_id] = dict
+                annotdict[gene_id][transcript_id] = dict()
             if not feature in annotdict[gene_id][transcript_id]:
                 annotdict[gene_id][transcript_id][feature] = IntervalTree()
             start = int(fields[3]) - 1
