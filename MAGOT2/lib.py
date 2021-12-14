@@ -117,7 +117,7 @@ def read_gff(gfffile: Path,version: Union[str,int] = 'auto') -> OrderedDict:
             attrs['seqid'] = fields[0]
             attrs['score'] = fields[5]
             attrs['strand'] = fields[6]
-            attrs['phase'] = field[7]
+            attrs['phase'] = fields[7]
             annotdict[gene_id][transcript_id][feature][start:stop] = attrs
     return annotdict
 
