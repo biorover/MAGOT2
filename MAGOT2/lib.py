@@ -269,7 +269,7 @@ transcript_dictionary -> gene_dictionary)
         if len(tlines) > 0:
             linelist.append(
                 '\t'.join([seqid,source,'gene',str(gstart),str(gend), str(gscore),strand,'.',
-                        'ID=' + gene_id]))
+                        'ID=' + gene_id])
             )
     return "\n".join(linelist)
 
