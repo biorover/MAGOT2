@@ -260,7 +260,7 @@ transcript_dictionary -> gene_dictionary)
                 continue
             tlines.append(
                 '\t'.join([seqid,source,ttype,str(tstart),str(tend), str(tscore),strand,'.',
-                        'ID=' + transcript_id + ';Parent=' + gene_id]))
+                        'ID=' + transcript_id + ';Parent=' + gene_id])
             )
             tlines.extend(flines)
             if tstart < gstart: gstart = tstart
