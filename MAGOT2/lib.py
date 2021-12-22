@@ -70,6 +70,14 @@ def orfs(x: str,best: bool = False) -> Union[list,str]: #todo: #1 add info table
         return orfs
 
 def read_gff(gfffile: Path,version: Union[str,int] = 'auto') -> OrderedDict:
+    """
+    Reads a reasonably sane gff3 or gtf file and fills and returns a nested dictionary containing annotation information
+    (format feature_type_interval_tree -> dictionary_of_feature_types -> dictionary_of_transcripts -> dictionary_of_genes)
+    attributes of features are stored as a dictionary within each interval
+
+    :param gfffile: Path. Path to gff3 or gtf
+    :param version: str or int. Valid options are 2, 3, or "auto" (in which case version will be determined from first line)
+    """
     annotdict = OrderedDict()
     t2g = {}
     with open(gfffile) as gff:
@@ -216,3 +224,85 @@ transcript_dictionary -> gene_dictionary)
                                                 attrs['score'],attrs['strand'],attrs['phase'],
                                                 'gene_id ' + gene_id + ';transcript_id ' + transcript_id]))
     return "\n".join(linelist)
+
+def annot2gff3(annotdict: dict) -> str:
+    """
+    takes a MAGOT2 format annotation dictionary and returns a string for gene, mRNA/transcript, exon, and CDS features in gff3 format
+
+    :params annotdict: dict. MAGOT2 format annotation dictionary (nested objects coordinate_IntervalTree -> feature_dictionary -> \
+transcript_dictionary -> gene_dictionary)
+    """
+    linelist = []
+    for gene_id in annotdict:
+        tlines = []
+        seqid,gstart,gend,strand,gscore,source = '.',np.inf,0,'.',0,'.'
+        for transcript_id in annotdict[gene_id]:
+            flines = []
+            tstart,tend,tscore = np.inf,0,0
+            for feature in ['exon','CDS']:
+                if feature in annotdict[gene_id][transcript_id]:
+                    for i,ivl in enumerate(annotdict[gene_id][transcript_id][feature]):
+                        attrs = ivl[2]
+                        if ivl[0] - 1 < tstart: tstart = ivl[0] -1
+                        if ivl[1] > tend: tend = ivl[1]
+                        if attrs['score'] > tscore: tscore = attrs['score']
+                        if seqid == '.': seqid = attrs['seqid']
+                        if strand == '.': strand = attrs['strand']
+                        if source == '.': source = attrs['source']
+                        flines.append('\t'.join([attrs['seqid'],attrs['source'],feature,str(ivl[0] + 1), str(ivl[1]), 
+                                                attrs['score'],attrs['strand'],attrs['phase'],
+                                                'ID=' + transcript_id + ':' + feature + str(i) + ';Parent=' + transcript_id]))
+            if 'CDS' in  annotdict[gene_id][transcript_id]:
+                ttype = 'mRNA'
+            elif 'exon' in annotdict[gene_id][transcript_id]:
+                ttype = 'transcript'
+            else:
+                continue
+            tlines.append(
+                '\t'.join([seqid,source,ttype,str(tstart),str(tend), str(tscore),strand,'.',
+                        'ID=' + transcript_id + ';Parent=' + gene_id]))
+            )
+            tlines.extend(flines)
+            if tstart < gstart: gstart = tstart
+            if tend > gend: gend = tend
+            if tscore > gscore: gscore = tscore
+        if len(tlines) > 0:
+            linelist.append(
+                '\t'.join([seqid,source,'gene',str(gstart),str(gend), str(gscore),strand,'.',
+                        'ID=' + gene_id]))
+            )
+    return "\n".join(linelist)
+
+def dipvcf2tripvcf(vcfin: Path,vcfout: Path,expand_on: str = "SR"):
+    """
+    reads a diploid vcf file and writes a triploid vcf file, chosing which allele to duplicate based on the "expand_on" param.
+
+    :param vcfin: Path. Path to diploid input vcf file
+    :param vcfout: Path. Path to output triploid vcf file
+    :param expand_on: str defualt "SR". What information to use to chose which allele to duplicate. Currently only valid option \
+is "SR", which will use the "SR" attribute from the info collumn to add the allele with the highest depth to the alleles field
+    """
+    with open(vcfin) as dip:
+        with open(vcfout,'w') as trip:
+            for line in dip:
+                if line[0] == "#":
+                    trip.write(line)
+                    continue
+                elif ';SR=' in line:
+                    srs = line.split(';SR=')[1].split(';')[0].split('\t')[0]
+                elif '\tSR=' in line:
+                    srs = line.split('\tSR=')[1].split(';')[0].split('\t')[0]
+                else:
+                    continue
+                srs = [int(k) for k in srs.split(',')]
+                ads = [srs[i] + srs[i+1] for i in range(0,len(srs),2)]
+                allele = np.argmax(ads)
+                fields = line.strip().split('\t')
+                subfields = fields[9].split(':')
+                gtindex = fields[8].split(':').index('GT')
+                alleles = [int(k) for k in subfields[gtindex].split('/')] + [allele]
+                alleles.sort()
+                subfields[gtindex] = '/'.join([str(k) for k in alleles])
+                fields[9] = ":".join(subfields)
+                trip.write("\t".join(fields) + '\n')
+

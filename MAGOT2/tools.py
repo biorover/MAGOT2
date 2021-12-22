@@ -102,4 +102,13 @@ def gff2gtf(gff: Path, *, output: Path = '/dev/stdout'):
     with open(output,'w') as f:
         f.write(gfflines + '\n')
 
-        
+def dipvcf2tripvcf(vcfin: Path,vcfout: Path,*,expand_on: str = "SR"):
+    """
+    reads a diploid vcf file and writes a triploid vcf file, chosing which allele to duplicate based on the "expand_on" param.
+
+    :param vcfin: Path. Path to diploid input vcf file
+    :param vcfout: Path. Path to output triploid vcf file
+    :param expand_on: str defualt "SR". What information to use to chose which allele to duplicate. Currently only valid option \
+is "SR", which will use the "SR" attribute from the info collumn to add the allele with the highest depth to the alleles field
+    """
+    lib.dipvcf2tripvcf(vcfin,vcfout,expand_on = expand_on)
