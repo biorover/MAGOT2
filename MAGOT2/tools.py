@@ -94,7 +94,7 @@ def fai2tiginfo(fai: Path):
 
 def gff2gtf(gff: Path, *, output: Path = '/dev/stdout'):
     """
-    Takes input gff (sane gff3s or gtfs) and writes out clean CDS gtf for O.G. MAGOT / HAPpy-ABCENTH compatibility
+    Takes input gff (sane gff3s or gtfs) and writes out clean CDS gtf for O-G MAGOT / HAPpy-ABCENTH compatibility
 
     :params gff: Path. Path to input gff file
     """
