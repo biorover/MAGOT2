@@ -50,7 +50,7 @@ def sumstats(table:str, *,column: int = 0, cname: str = None, N: bool = False,
                         Ns.pop()
                 if len(Ps) > 0:
                     if 100 * i / tot_len >= Ps[-1] and deciles:
-                        toprint.append(str(Ps[-2]) + 'th percentile: ' + str(value) + '\n')
+                        toprint.append(str(Ps[-1]) + 'th percentile: ' + str(value) + '\n')
                         Ps.pop()
             if deciles:
                 sys.stdout.write(''.join(toprint))
@@ -87,10 +87,11 @@ def fai2tiginfo(fai: Path):
     df = pd.read_csv(fai,header = None, sep = "\t",comment = '#').iloc[:,:2]
     df.columns = ['tig','tiglen']
     df = df.sort_values('tiglen',ascending = False)
-    lensum,runsum = df['tiglen'].sum(),0
+    lensum,runsum,tigi = df['tiglen'].sum(),0,0
     for i,row in df.iterrows():
         runsum += row['tiglen']
-        sys.stdout.write("\t".join([str(k) for k in [row['tig'],row['tiglen'], i + 1, int(100 * runsum / lensum), runsum] ]) + '\n')
+        tigi += 1
+        sys.stdout.write("\t".join([str(k) for k in [row['tig'],row['tiglen'], tigi, int(100 * runsum / lensum), runsum] ]) + '\n')
 
 def gff2gtf(gff: Path, *, output: Path = '/dev/stdout'):
     """
