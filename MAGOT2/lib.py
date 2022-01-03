@@ -82,7 +82,7 @@ def read_gff(gfffile: Path,version: Union[str,int] = 'auto') -> OrderedDict:
     t2g = {}
     with open(gfffile) as gff:
         for i,line in enumerate(gff):
-            fields = line.split('\t')
+            fields = line.strip().split('\t')
             if version == 'auto' and i==0:
                 if "#gff-version" in line:
                     version = int(line.split()[1])
