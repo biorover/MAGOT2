@@ -146,7 +146,7 @@ Could also be "CDS" or "exon" or other sub-feature (must then match "seq_from" a
 or "lorfaa" (longest orf amino acid) sequence
     """
     if not os.path.exists(str(fasta_file) + '.fai'):
-        pysam.faidx(fasta_file)
+        pysam.faidx(str(fasta_file))
     if not seq_level in ['transcript','gene']:
         if seq_level != seq_from:
             sys.stderr.write('error: invalid choice for "seq_level": ' + str(name_from) + 
