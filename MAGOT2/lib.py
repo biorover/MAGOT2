@@ -45,7 +45,7 @@ def translate(x: str,padXs: bool = False,frames: Union[list,int] = 1) -> Union[l
             codon = x[i:i+3]
             if len(codon) == 3 or padXs:
                 if codon.upper() in codons:
-                    ttab.append(codons[codon])
+                    ttab.append(codons[codon.upper()])
                 else:
                     ttab.append('X')
         ttabs.append("".join(ttab))
