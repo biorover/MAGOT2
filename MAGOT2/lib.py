@@ -1,10 +1,11 @@
 #!/usr/bin/env python
-import sys, pysam, os
+import sys, pysam, os, re, glob
 import numpy as np
 from intervaltree import IntervalTree, Interval
 from collections import OrderedDict
 from typing import Union
 from pathlib import Path
+import pandas as pd
 
 def mode(a,prec = 2) -> float:
     vals,counts =  np.unique(np.around(a,prec),return_counts=True)
@@ -305,4 +306,51 @@ is "SR", which will use the "SR" attribute from the info collumn to add the alle
                 subfields[gtindex] = '/'.join([str(k) for k in alleles])
                 fields[9] = ":".join(subfields)
                 trip.write("\t".join(fields) + '\n')
+
+def merge_tables(table_path: str,*args,**kwargs):
+    """
+    Takes a path w/ wildcards and merges tables with new columns for variable folders / filenames. Positional args are used for column names and, \
+    if iterable, regexes to match specific values. Keyword args are passed to pandas read_csv function.
+
+    :params table_path: path to tables with wildcards for variables to expand in new columns
+    """
+    ppl = table_path.split('*')
+    globpaths = glob.glob(table_path)
+    relist,colnames = [],[]
+    for col in args:
+        if type(col) == str:
+            relist.append(re.compile('.*'))
+            colnames.append(col)
+        else:
+            relist.append(re.compile(col[1]))
+            colnames.append(col[0])
+    #print(relist)
+    #print(globpaths)
+    for k,tp in enumerate(globpaths):
+        wcs = []
+        regexfail = False
+        tpstump = tp
+        for i,pp in enumerate(ppl[:-1]):
+            tpstump = tpstump[len(pp):]
+            wc = tpstump.split(ppl[i+1])[0]
+            wcs.append(wc)
+            tpstump = tpstump[len(wc):]
+            if len(relist) > i:
+                if not relist[i].search(wcs[-1]):
+                    regexfail = True
+                    continue
+        if regexfail:
+            continue
+        tpdf = pd.read_csv(tp,**kwargs)
+        for i,col in enumerate(colnames):
+            tpdf[col] = wcs[i]
+        for i,wc in enumerate(wcs[len(colnames):]):
+            tpdf['newcol' + str(i)] = wc
+        if k == 0:
+            df = tpdf.copy()
+        else:
+            df = df.append(tpdf)
+    return df
+
+        
 
