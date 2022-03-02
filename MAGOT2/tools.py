@@ -114,7 +114,7 @@ is "SR", which will use the "SR" attribute from the info collumn to add the alle
     """
     lib.dipvcf2tripvcf(vcfin,vcfout,expand_on = expand_on)
 
-def compress_homopylymers(infile: Path,outfile: Path):
+def compress_homopolymers(infile: Path,outfile: Path = '/dev/stdout'):
     """
     reads a fasta file and writes a homopolymer compressed fasta file
 
