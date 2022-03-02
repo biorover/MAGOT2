@@ -351,6 +351,3 @@ def merge_tables(table_path: str,*args,**kwargs):
         else:
             df = df.append(tpdf)
     return df
-
-        
-

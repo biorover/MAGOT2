@@ -113,3 +113,26 @@ def dipvcf2tripvcf(vcfin: Path,vcfout: Path,*,expand_on: str = "SR"):
 is "SR", which will use the "SR" attribute from the info collumn to add the allele with the highest depth to the alleles field
     """
     lib.dipvcf2tripvcf(vcfin,vcfout,expand_on = expand_on)
+
+def compress_homopylymers(infile: Path,outfile: Path):
+    """
+    reads a fasta file and writes a homopolymer compressed fasta file
+
+    :param infile: Path. Input fasta file
+    :param ofile: Path. Output fasta file
+    """
+    lastchar = None
+    isdef = False
+    with open(infile) as f:
+        with open(outfile,'w') as o:
+            while True:
+                c = f.read(1)
+                if not c:
+                    break
+                if c == '>':
+                    isdef = True
+                elif c == "\n":
+                    isdef = False
+                if isdef or not c == lastchar:
+                    o.write(c)
+                lastchar = c
