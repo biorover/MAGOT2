@@ -4,6 +4,7 @@ import pandas as pd
 from . import lib
 import sys
 from pathlib import Path
+import ete3
 
 def sumstats(table:str, *,column: int = 0, cname: str = None, N: bool = False, 
             deciles: bool = False, delim: str = "\t"):
@@ -126,7 +127,7 @@ def compress_homopolymers(infile: Path,outfile: Path = '/dev/stdout'):
     with open(infile) as f:
         with open(outfile,'w') as o:
             while True:
-                c = f.read(1)
+                c = f.read(1).upper()
                 if not c:
                     break
                 if c == '>':
@@ -136,3 +137,55 @@ def compress_homopolymers(infile: Path,outfile: Path = '/dev/stdout'):
                 if isdef or not c == lastchar:
                     o.write(c)
                 lastchar = c
+
+def build_clusters(tree_file: Path,seq_file: Path, out_dir: Path, cluster_threshold: float):
+    """Reads an ultrametric newick tree and breaks tree into clusters of genes \
+    within a specified branch distance of each other, writing each cluster to a separate \
+    fasta file in "out_dir".
+    
+    :param tree_file: Path. Input tree file in newick format (expected to be ultrametric)
+    :param out_dir: Path. Directory to which to write output fasta files
+    :param seq_file: Path. Fasta file of sequences to split
+    :param cluster_threshold: float. Cutoff at which to split clusters
+    """
+    prot_seq_dict = {}
+    for line in open(seq_file):
+        if line[0] == ">":
+            active_seq = line[1:].strip()
+            prot_seq_dict[active_seq] = ""
+        else:
+            prot_seq_dict[active_seq] += line.strip()
+    prottree = ete3.Tree(open(tree_file).read() + ';')
+    clusters = []
+    dont_append = False
+    while prottree.get_distance(prottree.get_leaves()[0]) > cluster_threshold and len(prottree.get_leaves()) > 1:
+        children = prottree.get_children()
+        child_one_dist = children[0].get_distance(children[0].get_leaves()[0])
+        child_two_dist = children[1].get_distance(children[1].get_leaves()[0])
+        while child_one_dist > cluster_threshold and child_two_dist > cluster_threshold:
+            children = children[0].get_children()
+            child_one_dist = children[0].get_distance(children[0].get_leaves()[0])
+            child_two_dist = children[1].get_distance(children[1].get_leaves()[0])
+        if child_one_dist < cluster_threshold:
+            clusters.append(children[0].get_leaf_names())
+            try:
+                prottree.prune(list(set(prottree.get_leaves()) - set(children[0].get_leaves())), preserve_branch_length = True)
+            except:
+                if len(prottree.get_leaves()) < 2:
+                    dont_append = True
+                    break
+        if child_two_dist < cluster_threshold:
+            clusters.append(children[1].get_leaf_names())
+            try:
+                prottree.prune(list(set(prottree.get_leaves()) - set(children[1].get_leaves())), preserve_branch_length = True)
+            except:
+                if len(prottree.get_leaves()) < 2:
+                    dont_append = True
+                    break
+    if not dont_append:
+        clusters.append(prottree.get_leaf_names())
+    for i,cluster in enumerate(clusters):
+        with open(f'{out_dir}/cluster_{i}.fasta','w') as o:
+            for gene in cluster:
+                seq = prot_seq_dict[gene]
+                o.write(f'>{gene}\n{seq}\n')
