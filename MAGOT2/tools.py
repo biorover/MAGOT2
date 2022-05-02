@@ -7,7 +7,7 @@ from pathlib import Path
 import ete3
 
 def sumstats(table:str, *,column: int = 0, cname: str = None, N: bool = False, 
-            deciles: bool = False, delim: str = "\t"):
+            deciles: bool = False, delim: str = "\t", mode_precision: int = 3):
     """
     Calulate summary stats for a column in an input file
 
@@ -33,7 +33,7 @@ def sumstats(table:str, *,column: int = 0, cname: str = None, N: bool = False,
         myarray = np.sort(nlist)[::-1]
         mymax = myarray.max()
         mysum = myarray.sum()
-        prec = int(3 - np.log10(mymax))
+        prec = int(mode_precision - np.log10(mymax))
         sys.stdout.write('Sum: ' + str(mysum) + '\nCount: ' + str(len(myarray)) + '\nMean: ' + str(myarray.mean()) + '\nMedian: ' + 
             str(myarray[int(len(myarray) / 2)]) + "\nMode: " + str(lib.mode(myarray,prec)) + 
             '\nStdev: ' + str(myarray.std()) + '\n')
@@ -136,7 +136,8 @@ def compress_homopolymers(infile: Path,outfile: Path = '/dev/stdout'):
                     isdef = False
                 if isdef or not c == lastchar:
                     o.write(c)
-                lastchar = c
+                if c != '\n':
+                    lastchar = c
 
 def build_clusters(tree_file: Path,seq_file: Path, out_dir: Path, cluster_threshold: float):
     """Reads an ultrametric newick tree and breaks tree into clusters of genes \
@@ -189,3 +190,30 @@ def build_clusters(tree_file: Path,seq_file: Path, out_dir: Path, cluster_thresh
             for gene in cluster:
                 seq = prot_seq_dict[gene]
                 o.write(f'>{gene}\n{seq}\n')
+
+def simple_cluster(infile: Path,outfile: Path = '/dev/stdout'):
+    """
+    takes sorted, whitespace seperated pairs of names and outputs \
+    clusters of names with any degree of connection.
+
+    :param infile: Path. Input pair file
+    :param ofile: Path. Output cluster file   
+    """
+    clustdict = {}
+    with open(infile) as f:
+        for line in f:
+            p = line.split()
+            if p[0] in clustdict:
+                if p[1] in clustdict:
+                    pass
+                else:
+                    clustdict[p[1]] = clustdict[p[0]]
+            elif p[1] in clustdict:
+                clustdict[p[0]] == clustdict[p[1]]
+            else:
+                clustdict[p[0]] == p[0]
+                clustdict[p[1]] == p[0] 
+    with open(outfile,'w') as f:
+        for node in clusterdict:
+
+
