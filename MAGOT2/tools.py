@@ -215,5 +215,4 @@ def simple_cluster(infile: Path,outfile: Path = '/dev/stdout'):
                 clustdict[p[1]] == p[0] 
     with open(outfile,'w') as f:
         for node in clusterdict:
-
-
+            print("function not yet ready")
