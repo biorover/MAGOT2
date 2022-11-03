@@ -23,7 +23,7 @@ def sumstats(table:str, *,column: int = 0, cname: str = None, N: bool = False,
     with open(table) as f:
         nlist = []
         for i,line in enumerate(f):
-            fields = line.split(delim)
+            fields = line.strip().split(delim)
             if i==0 and cname:
                 column = fields.index(cname)
             try:
