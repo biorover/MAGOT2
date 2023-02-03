@@ -54,7 +54,7 @@ def sumstats(table:str, *,column: int = 0, cname: str = None, N: bool = False,
                     if 100 * i / tot_len >= Ps[-1] and deciles:
                         toprint.append(str(Ps[-1]) + 'th percentile: ' + str(value) + '\n')
                         Ps.pop()
-                if i==len(myarray):
+                if i==len(myarray) - 1:
                     if N and len(Ns) > 0:
                         sys.stdout.write("N" + str(Ns[-1]) + ": " + str(value) + "\n")
                     if deciles and len(Ps) > 0:
