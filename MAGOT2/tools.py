@@ -33,6 +33,7 @@ def sumstats(table:str, *,column: int = 0, cname: str = None, N: bool = False,
         myarray = np.sort(nlist)[::-1]
         mymax = myarray.max()
         mysum = myarray.sum()
+        mymin = myarray.min()
         prec = int(mode_precision - np.log10(mymax))
         sys.stdout.write('Sum: ' + str(mysum) + '\nCount: ' + str(len(myarray)) + '\nMean: ' + str(myarray.mean()) + '\nMedian: ' + 
             str(myarray[int(len(myarray) / 2)]) + "\nMode: " + str(lib.mode(myarray,prec)) + 
@@ -53,6 +54,11 @@ def sumstats(table:str, *,column: int = 0, cname: str = None, N: bool = False,
                     if 100 * i / tot_len >= Ps[-1] and deciles:
                         toprint.append(str(Ps[-1]) + 'th percentile: ' + str(value) + '\n')
                         Ps.pop()
+                if i==len(myarray):
+                    if N and len(Ns) > 0:
+                        sys.stdout.write("N" + str(Ns[-1]) + ": " + str(value) + "\n")
+                    if deciles and len(Ps) > 0:
+                        toprint.append(str(Ps[-1]) + 'th percentile: ' + str(value) + '\n')
             if deciles:
                 sys.stdout.write(''.join(toprint))
 
