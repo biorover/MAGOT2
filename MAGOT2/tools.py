@@ -18,6 +18,7 @@ specified, chromosome plots)
     :param ref_fai: samtools faidx index file(s) for reference (for generating chromosome plots)
     :param centromere_bed: bedfile of centromere locations in reference genome (for making \
 chromosome plots pretty)
+    :param outprefix: prefix for plot output files
     :param chr_order: order from chromosomes in chromosome plots. Options are "auto" (length sorted), "human" (chr1-22+XY),\
  or list of chromosomes
     """
