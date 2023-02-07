@@ -31,13 +31,13 @@ chromosome plots pretty)
                                     same_scaf_suffix = "_contig",order = chr_order)
             fig.savefig(f'{outprefix}.chrmPlot{i}.pdf')
 
-def split_scaffolds(fasta: Path)
+def split_scaffolds(fasta: Path):
     """
     Splits scaffolds in fasta file into contigs (splits at 10+ Ns)
 
     :param fasta: fasta file input
     """
-    
+
     ws = []
     for line in open(fasta):
         if line[0] == '>':
