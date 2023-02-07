@@ -31,6 +31,32 @@ chromosome plots pretty)
                                     same_scaf_suffix = "_contig",order = chr_order)
             fig.savefig(f'{outprefix}.chrmPlot{i}.pdf')
 
+def split_scaffolds(fasta: Path)
+    """
+    Splits scaffolds in fasta file into contigs (splits at 10+ Ns)
+
+    :param fasta: fasta file input
+    """
+    
+    ws = []
+    for line in open(fasta):
+        if line[0] == '>':
+            if ws != []:
+                seq = "".join(ws)
+                seqlines = seq.split('NNNNNNNNNN')
+                sl = len(seqlines)
+                for i,seqline in enumerate(seqlines):
+                if seqline != '':
+                    if sl > 1:
+                        print(">" + id + "_contig" + str(i))
+                    else:
+                        print('>' + id)
+                    print(seqline.strip('N'))
+            id = line[1:].split()[0]
+            ws = []
+        else:
+            ws.append(line.strip())
+
 def sumstats(table:str, *,column: int = 0, cname: str = None, N: bool = False, 
             deciles: bool = False, delim: str = "\t", mode_precision: int = 3):
     """
