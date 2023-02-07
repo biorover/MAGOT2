@@ -5,6 +5,7 @@ from . import lib
 import sys
 from pathlib import Path
 import ete3
+from typing import Iterable, List, Optional, Union
 
 def plot_chrs(*, paf: Optional[List[Path]] = None, fai: Optional[List[Path]] = None, 
                 ref_fai: Optional[Path] = None,
