@@ -46,12 +46,12 @@ def split_scaffolds(fasta: Path):
                 seqlines = seq.split('NNNNNNNNNN')
                 sl = len(seqlines)
                 for i,seqline in enumerate(seqlines):
-                if seqline != '':
-                    if sl > 1:
-                        print(">" + id + "_contig" + str(i))
-                    else:
-                        print('>' + id)
-                    print(seqline.strip('N'))
+                    if seqline != '':
+                        if sl > 1:
+                            print(">" + id + "_contig" + str(i))
+                        else:
+                            print('>' + id)
+                        print(seqline.strip('N'))
             id = line[1:].split()[0]
             ws = []
         else:
