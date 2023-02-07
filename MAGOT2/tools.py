@@ -27,7 +27,7 @@ chromosome plots pretty)
         chr_order = chr_order[0]
     if paf != False and ref_fai != False:
         for i,paffile in enumerate(paf):
-            fig,ax = lib.plot_chrms(paffile, ref_fai, infmt = 'paf',centromere_bed = centromere_bed,,
+            fig,ax = lib.plot_chrms(paffile, ref_fai, infmt = 'paf',centromere_bed = centromere_bed,
                                     legend_names = ['scaffolds','gap','reference gap'],
                                     same_scaf_suffix = "_contig",order = chr_order)
             fig.savefig(f'{outprefix}.chrmPlot{i}.pdf')
