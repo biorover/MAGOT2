@@ -7,6 +7,11 @@ from typing import Union
 from pathlib import Path
 import pandas as pd
 
+import matplotlib as mpl
+from matplotlib import pyplot as plt
+from matplotlib.patches import Patch
+from matplotlib.lines import Line2D
+
 def mode(a,prec = 2) -> float:
     vals,counts =  np.unique(np.around(a,prec),return_counts=True)
     return vals[np.argmax(counts)]
@@ -351,3 +356,279 @@ def merge_tables(table_path: str,*args,**kwargs):
         else:
             df = df.append(tpdf)
     return df
+
+def plot_chrms(infile, ref_fai, infmt = 'auto', colors= ['royalblue','grey'],order = 'auto',
+               centromere_bed = None, min_colorchange_width = 2000000, 
+               legend_names = ['phaseblocks','unphased','assembly gap'],
+               min_tig_len = 100000,figsize = (10,5),gap_bed = None,ax = None, feature_bed = None,
+               feature_name = None, legend = True, title = "",swath_bed = None,swath_name = None,
+               show_alignment_gap = True,chrname_exclude_chars = ['_','EBV'], gapcolor = 'plum',
+               refgapcolor = 'white',algngapcolor = 'yellow',swath_and_feature_colors = ['red',
+               'gold','grey','purple', 'turqoise','skyblue','darkblue'],
+               chrstrip = False, same_scaf_suffix = None, same_scaf_colors = ['skyblue','lightgrey']
+               ):
+    """
+    plots intervals (from paf, bed, or gtf files)
+    """
+    
+    if infmt == 'auto':
+        if type(infile) == str:
+            if infile.strip('.gz')[-3:] in ['bed','gtf','paf']:
+                infmt = infile.strip('.gz')[-3:]
+            else:
+                infmt = 'paf'
+        else:
+            infmt = 'paf'
+            
+    if infile == None:
+            intdf = pd.DataFrame(columns = ['sid','sstart','send','qid'])
+    elif infmt == 'paf':
+            intdf = pd.read_csv(infile,sep="\t",usecols=list(range(12)),header = None)
+            intdf.columns = ['qid','qlen','qstart','qend','orient','sid','slen','sstart','send','matches','alen','ascore']
+    elif infmt == 'bed':
+            intdf = pd.read_csv(infile, sep = '\t', usecols= [0,1,2])
+            intdf.columns = ['sid','sstart','send']
+            intdf['qid'] = list(intdf.index)
+    elif infmt == 'gtf':
+            intdf = pd.read_csv(infile, sep = '\t', usecols= [0,1,2,3,4,5,6,7,8],header = None)
+            intdf.columns = ['sid','src','kind','sstart','send','score','orient','phase','attributes']
+            intdf['qid'] = intdf['attributes'].str.split('gene_id ').str[1].str.split(';'
+                ).str[0].str.replace('"','').str.replace(' ','')
+    #print(intdf.head())
+    intdf['alen'] = intdf['send'] - intdf['sstart']
+    intdf = intdf[intdf['alen'] > min_tig_len].sort_values('alen',ascending=False)
+    #print(intdf.query('sid == "chr16_MATERNAL"').head())
+    if centromere_bed:
+        cendf = pd.read_csv(centromere_bed,header=None,sep="\t",index_col = 0)
+    if gap_bed:
+        gapdf = pd.read_csv(gap_bed,header=None,sep="\t").iloc[:,:3]
+        gapdf.columns = ['seq','start','stop']
+        gapdf['length'] = gapdf['stop'] - gapdf['start']
+    chrdict = {}
+    chrlens = {}
+    for i,row in intdf.iterrows():
+        coords = [row['sstart'],row['send']]
+        loc = row['sid']
+        if not loc in chrdict:
+            chrdict[loc] = IntervalTree()
+        ov = False
+        for overlap in chrdict[loc].overlap(coords[0],coords[1]):
+            if overlap[0] <= coords[0] and overlap[1] >= coords[1]:
+                ov = True
+        if not ov:
+            chrdict[loc][coords[0]:coords[1]] = row['qid']
+    excludechars = set(chrname_exclude_chars)
+    for line in open(ref_fai):
+        fields = line.split('\t')
+        if not len(set(fields[0]) & excludechars) > 0:
+            chrlens[fields[0]] = int(fields[1])
+    if not ax:
+        fig,ax = plt.subplots(1,1,figsize=figsize)
+        axpassed = False
+    else:
+        axpassed = True
+    xlabels = []
+    if order == 'auto':
+        enumerator = enumerate(sorted([ [chrlens[k],k] for k in chrlens],reverse=True))
+    elif order == 'human':
+        enumerator = enumerate([[0, 'chr' + str(k)] for k in list(range(1,23)) + ['M','X','Y'] ])
+    else:
+        enumerator = enumerate([[0,k] for k in order])
+    
+    if swath_bed:
+        if type(swath_bed) != list:
+            swath_bed = [swath_bed]
+        swath_list = []
+        for bed in swath_bed:
+            swath_list.append({})
+            for i in open(bed):
+                fields = i.split('\t')
+                if len(fields) > 1:
+                    if not fields[0] in swath_list[-1]:
+                        swath_list[-1][fields[0]] = []
+                    swath_list[-1][fields[0]].append([int(fields[1]),int(fields[2])])
+    else:
+        swath_list = []
+    
+    if feature_bed:
+        if type(feature_bed) != list:
+            feature_bed = [feature_bed]
+        feature_list = []
+        for bed in feature_bed:
+            feature_list.append({})
+            for i in open(bed):
+                fields = i.split('\t')
+                if len(fields) > 1:
+                    if not fields[0] in feature_list[-1]:
+                        feature_list[-1][fields[0]] = []
+                    feature_list[-1][fields[0]].append(int(fields[1]))
+    
+    for i,locp in enumerator:
+        ax.bar(x=i+1,height = chrlens[locp[1]] / 1000000,color =gapcolor,width = 0.75,edgecolor=colors[0],label = 'gap')
+        xlabels.append(locp[1])
+        wqid = ""
+        color = colors[0]
+        astart = 0
+        astop = 0
+        switch = [True,0]
+        if locp[1] in chrdict:
+            for k,coords in enumerate(sorted(chrdict[locp[1]])):
+                if wqid != coords[2]:
+                    pcoords = coords
+                    astart = coords[0]
+                    switch[0] = True
+                else:
+                    pcoords = [astart,coords[1]]
+                    switch[1] == coords[1]
+                if switch[0] and pcoords[0] - switch[1] > min_colorchange_width: # this controls minimum band length I think
+                    if same_scaf_suffix: # this expands tig colors out to four, with closer colors for tigs from the same scaffold
+                        if wqid.split(same_scaf_suffix)[0] == coords[2].split(same_scaf_suffix)[0]:
+                            if color == colors[0]:
+                                color = same_scaf_colors[0]
+                            elif color == same_scaf_colors[0]:
+                                color = colors[0]
+                            elif color == colors[1]:
+                                color = same_scaf_colors[1]
+                            elif color == same_scaf_colors[1]:
+                                color = colors[1]
+                        else:
+                            if color in (color[0],same_scaf_colors[0]):
+                                color = colors[1]
+                            else:
+                                color = colors[0]
+                    if color == colors[0]:
+                        color = colors[1]
+                    elif color == colors[1]:
+                        color = colors[0]
+                    switch = [False,coords[0]]
+                wqid = coords[2]
+                astop = coords[1]
+                ax.bar(x=i+1,y=pcoords[0]/ 1000000 ,height=  (pcoords[1]-pcoords[0]) / 1000000,color=color,
+                       width=0.75,linewidth = 0)
+
+            laststop = 0
+            lastid = ""
+            for coords in sorted(chrdict[locp[1]]):
+                if coords[0] - laststop > 10000 and lastid == coords[2] and show_alignment_gap:
+                    ax.bar(x=i+1,y=laststop/ 1000000,height= (coords[0]- laststop) / 1000000,color=(0,0,0,0),
+                           edgecolor=algngapcolor,width=0.75,hatch = '//////',linewidth=0)
+                elif coords[0] - laststop > 300000 and lastid != coords[2]:
+                    ax.bar(x=i+1,y=laststop/ 1000000,height= (coords[0]- laststop) / 1000000,color=(0,0,0,0),
+                           edgecolor=colors[0],width=0.75,linewidth=1)
+                lastid = coords[2]
+                laststop = coords[1]
+            ax.bar(x=i+1,height = chrlens[locp[1]] / 1000000,color =(0, 0, 0, 0),
+                   width = 0.75,edgecolor=colors[0],linewidth = 1)
+        if gap_bed:
+            if locp[1] in set(gapdf['seq']):
+                chrgapdf = gapdf.query('seq == "' + locp[1] + '"' )
+                for index,row in chrgapdf.iterrows():
+                    if row['length'] > 3000000:
+                        ax.bar(x=i+1,y = row['start']/ 1000000,height = row['length'] / 1000000,color = 'white',
+                               width = 0.75,edgecolor=colors[0],label = 'gap')
+        if centromere_bed:
+            if locp[1] in cendf.index:
+                censtart = cendf.at[locp[1],1]
+                cenend = cendf.at[locp[1],2]
+                ax.bar(x=i+1 - 0.3, y = censtart / 1000000, height = (cenend - censtart) / 1000000,color =(1, 1, 1, 1),
+                       width = 0.15,edgecolor=colors[0])
+                ax.bar(x=i+1 - 0.35, y = censtart / 1000000, height = (cenend - censtart) / 1000000,color =(1, 1, 1, 1),
+                       width = 0.15)
+                ax.bar(x=i+1 + 0.3, y = censtart / 1000000, height = (cenend - censtart) / 1000000,color =(1, 1, 1, 1),
+                       width = 0.15,edgecolor=colors[0])
+                ax.bar(x=i+1 + 0.35, y = censtart / 1000000, height = (cenend - censtart) / 1000000,color =(1, 1, 1, 1),
+                       width = 0.15)
+        
+        if swath_bed:
+            for swath_index,swath_dict in enumerate(swath_list):
+                if locp[1] in swath_dict:
+                    
+                    for swath in swath_dict[locp[1]]:
+                        ax.bar(x=i+1,y= swath[0]/ 1000000,height= (swath[1] - swath[0]) / 1000000,
+                                color= swath_and_feature_colors[swath_index],
+                           edgecolor='black',width=0.75,linewidth=0)
+        
+        if feature_bed:
+            for feature_index,feature_dict in enumerate(feature_list):
+                if locp[1] in feature_dict:
+                    elipses = {}
+                    for feature in feature_dict[locp[1]]:
+                        elipses[feature] = mpl.patches.Ellipse(
+                            (i+1,feature / 1000000),
+                            width= 0.5,
+                            height = 5,
+                            facecolor = swath_and_feature_colors[len(swath_list) + feature_index],
+                        )
+
+                        ax.add_patch(elipses[feature])
+    
+    if legend == True:
+        if infile != None:
+            pa1 = Patch(facecolor=colors[0], edgecolor=colors[0])
+            pa2 = Patch(facecolor=colors[1], edgecolor=colors[0])
+            pb1 = Patch(facecolor=refgapcolor, edgecolor=colors[0])
+            pb2 = Patch(facecolor=refgapcolor, edgecolor=colors[0])
+            pc1= Patch(facecolor=gapcolor,edgecolor=colors[0])
+            pc2= Patch(facecolor=gapcolor,edgecolor=colors[0])
+            handles_c1 = [pa1, pc1, pb1]
+            handles_c2 = [pa2, pc2, pb2]
+            labels = legend_names
+            if same_scaf_suffix != None:
+                handles_c1.append(mpl.patches.Ellipse((-1,-1),4,2,facecolor = colors[0] ))
+                handles_c2.append(mpl.patches.Ellipse((-1,-1),4,2,facecolor = same_scaf_colors[0] ))
+                handles_c1.append(mpl.patches.Ellipse((-1,-1),4,2,facecolor = colors[1] ))
+                handles_c2.append(mpl.patches.Ellipse((-1,-1),4,2,facecolor = same_scaf_colors[1] ))
+                labels.append('contigs on same')
+                labels.append('    scaffold')
+        else:
+            handles_c1 = []
+            handles_c2 = []
+            labels = []
+        
+        if swath_name:
+            if type(swath_name) != list:
+                swath_name = [swath_name]
+            for findex,fname in enumerate(swath_name):
+                handles_c1.append(mpl.patches.Ellipse((-1,-1),4,2,facecolor = swath_and_feature_colors[ findex]))
+                handles_c2.append(mpl.patches.Ellipse((-1,-1),4,2,facecolor = swath_and_feature_colors[ findex]))
+                labels.append(fname)
+
+        if feature_name:
+            if type(feature_name) != list:
+                feature_name = [feature_name]
+            else:
+                for findex,fname in enumerate(feature_name):
+                    handles_c1.append(mpl.patches.Ellipse((-1,-1),4,2,
+                        facecolor = swath_and_feature_colors[len(swath_list) + findex]))
+                    handles_c2.append(mpl.patches.Ellipse((-1,-1),4,2,
+                        facecolor = swath_and_feature_colors[len(swath_list) + findex]))
+                    labels.append(fname)
+        if len(labels) > 0:
+            labels = ['' for k in labels] + labels
+            handles = handles_c1 + handles_c2
+            ax.legend(handles= handles,
+                    labels=labels,
+                    ncol=2, handletextpad=0.5, handlelength=1.0, columnspacing=-0.5,
+                    loc=1, fontsize=10,frameon=False)
+
+    #ax.bar(x=5,y=220,height = 1, color = colors[0])
+    
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.spines['bottom'].set_visible(False)
+    
+    ax.set_ylim([-1,np.around(max(chrlens.values())/50000000, decimals=0)*50])
+    ax.xaxis.set_ticks(np.arange(1, len(xlabels) + 1))
+    ax.tick_params(axis=u'x', which=u'both',length=0)
+    ax.axes.get_yaxis().set_visible(False)
+    ax.spines['left'].set_visible(False)
+    if chrstrip:
+        ax.set_xticklabels([k.replace('chr','') for k in xlabels],rotation = 0)
+    else:
+        ax.set_xticklabels(xlabels)
+        plt.xticks(rotation=90)
+    ax.set_title(title,ha='center')
+
+    plt.tight_layout()
+    if not axpassed:
+        return fig,ax

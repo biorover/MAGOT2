@@ -6,6 +6,32 @@ import sys
 from pathlib import Path
 import ete3
 
+def plot_chrs(*, paf: Optional[List[Path]] = None, fai: Optional[List[Path]] = None, 
+                ref_fai: Optional[Path] = None,
+                centromere_bed: Optional[Path] = None,outprefix: Path = "genome_plots",
+                chr_order: Union[List[str]] = 'auto'):
+    """
+    Generates plots for denovo genome assembly quality evaluation.
+    
+    :param paf: paf file(s) of genome aligned to a reference (generates dot plots and, if ref_fai \
+specified, chromosome plots)
+    :param fai: samtools faidx index file(s) for genome (generates Nx plots)
+    :param yak: output(s) of yak trio eval command (generates hapmer bubble plots)
+    :param ref_fai: samtools faidx index file(s) for reference (for generating chromosome plots)
+    :param centromere_bed: bedfile of centromere locations in reference genome (for making \
+chromosome plots pretty)
+    :param chr_order: order from chromosomes in chromosome plots. Options are "auto" (length sorted), "human" (chr1-22+XY),\
+ or list of chromosomes
+    """
+    if type(chr_order) == list and len(chr_order) == 1:
+        chr_order = chr_order[0]
+    if paf != False and ref_fai != False:
+        for i,paffile in enumerate(paf):
+            fig,ax = lib.plot_chrms(paffile, ref_fai, infmt = 'paf',centromere_bed = centromere_bed,,
+                                    legend_names = ['scaffolds','gap','reference gap'],
+                                    same_scaf_suffix = "_contig",order = chr_order)
+            fig.savefig(f'{outprefix}.chrmPlot{i}.pdf')
+
 def sumstats(table:str, *,column: int = 0, cname: str = None, N: bool = False, 
             deciles: bool = False, delim: str = "\t", mode_precision: int = 3):
     """
