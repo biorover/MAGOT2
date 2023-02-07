@@ -362,7 +362,7 @@ def plot_chrms(infile, ref_fai, infmt = 'auto', colors= ['royalblue','grey'],ord
                legend_names = ['phaseblocks','unphased','assembly gap'],
                min_tig_len = 100000,figsize = (10,5),gap_bed = None,ax = None, feature_bed = None,
                feature_name = None, legend = True, title = "",swath_bed = None,swath_name = None,
-               show_alignment_gap = True,chrname_exclude_chars = ['_','EBV'], gapcolor = 'plum',
+               show_alignment_gap = True,chrname_exclude_chars = None, gapcolor = 'plum',
                refgapcolor = 'white',algngapcolor = 'yellow',swath_and_feature_colors = ['red',
                'gold','grey','purple', 'turqoise','skyblue','darkblue'],
                chrstrip = False, same_scaf_suffix = None, same_scaf_colors = ['skyblue','lightgrey']
