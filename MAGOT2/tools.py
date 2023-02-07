@@ -7,8 +7,7 @@ from pathlib import Path
 import ete3
 from typing import Iterable, List, Optional, Union
 
-def plot_chrs(*, paf: Optional[List[Path]] = None, fai: Optional[List[Path]] = None, 
-                ref_fai: Optional[Path] = None,
+def plot_chrs(*, paf: Optional[List[Path]] = None, ref_fai: Optional[Path] = None,
                 centromere_bed: Optional[Path] = None,outprefix: Path = "genome_plots",
                 chr_order: Union[List[str]] = 'auto'):
     """
@@ -16,8 +15,6 @@ def plot_chrs(*, paf: Optional[List[Path]] = None, fai: Optional[List[Path]] = N
     
     :param paf: paf file(s) of genome aligned to a reference (generates dot plots and, if ref_fai \
 specified, chromosome plots)
-    :param fai: samtools faidx index file(s) for genome (generates Nx plots)
-    :param yak: output(s) of yak trio eval command (generates hapmer bubble plots)
     :param ref_fai: samtools faidx index file(s) for reference (for generating chromosome plots)
     :param centromere_bed: bedfile of centromere locations in reference genome (for making \
 chromosome plots pretty)
