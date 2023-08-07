@@ -2,9 +2,8 @@
 import numpy as np
 import pandas as pd
 from . import lib
-import sys
+import sys, gz, ete3
 from pathlib import Path
-import ete3
 from typing import Iterable, List, Optional, Union
 
 def plot_chrs(*, paf: Optional[List[Path]] = None, ref_fai: Optional[Path] = None,
@@ -39,7 +38,11 @@ def split_scaffolds(fasta: Path):
     """
 
     ws = []
-    for line in open(fasta):
+    try:
+        fastafile = gzip.open(fasta,'rt')
+    except:
+        fastafile = open(fasta)
+    for line in fasta:
         if line[0] == '>':
             if ws != []:
                 seq = "".join(ws)
