@@ -2,7 +2,7 @@
 import numpy as np
 import pandas as pd
 from . import lib
-import sys, gz, ete3
+import sys, gzip, ete3
 from pathlib import Path
 from typing import Iterable, List, Optional, Union
 
