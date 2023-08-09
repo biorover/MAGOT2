@@ -42,7 +42,7 @@ def split_scaffolds(fasta: Path):
         fastafile = gzip.open(fasta,'rt')
     except:
         fastafile = open(fasta)
-    for line in fasta:
+    for line in fastafile:
         if line[0] == '>':
             if ws != []:
                 seq = "".join(ws)
