@@ -38,9 +38,9 @@ def split_scaffolds(fasta: Path):
     """
 
     ws = []
-    try:
+    if open(fasta).read(2) == b'\x1f\x8b'
         fastafile = gzip.open(fasta,'rt')
-    except:
+    else:
         fastafile = open(fasta)
     for line in fastafile:
         if line[0] == '>':
