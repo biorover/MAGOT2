@@ -38,7 +38,7 @@ def split_scaffolds(fasta: Path):
     """
 
     ws = []
-    if open(fasta).read(2) == b'\x1f\x8b'
+    if open(fasta).read(2) == b'\x1f\x8b':
         fastafile = gzip.open(fasta,'rt')
     else:
         fastafile = open(fasta)
